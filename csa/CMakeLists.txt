@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 2.8)
 
 project(csa++)
 
+# if(APPLE)
+    include_directories(/usr/include/malloc/)
+    # endif
 set(srcs csa.cc csaAssign.cc)
 set(hdrs csa.hh csa_types.h csa_defs.h)
 

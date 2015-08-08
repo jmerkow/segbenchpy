@@ -16,7 +16,7 @@
 
 // Set to 1 or 0.  Controlls if the nextpow2 methods get defined,
 // which depend on having the ieeefp.h header file.
-#define NEXTPOW2 1
+#define NEXTPOW2 0
 
 class Matrix 
 {
@@ -148,7 +148,8 @@ public:
     friend Matrix transpose (const Matrix& a);
     friend Matrix fliplr (const Matrix& a);
     friend Matrix flipud (const Matrix& a);
-    friend Matrix rot90 (const Matrix& a, int k = 1);
+    Matrix rot90 (const Matrix& a, int k = 1);
+    friend Matrix rot90 (const Matrix& a, int k);
 
     // replication
     Matrix repmat (int m, int n) const;
@@ -171,8 +172,10 @@ public:
     // masking
     void tril (int k = 0);	// save lower triangle
     void triu (int k = 0);	// save upper triangle
-    friend Matrix tril (const Matrix& a, int k = 0);
-    friend Matrix triu (const Matrix& a, int k = 0);
+    Matrix tril (const Matrix& a, int k = 0);
+    Matrix triu (const Matrix& a, int k = 0);
+    friend Matrix tril (const Matrix& a, int k);
+    friend Matrix triu (const Matrix& a, int k);
 
     // diagonal
     Matrix getdiag (int k = 0) const;	   	// get vector

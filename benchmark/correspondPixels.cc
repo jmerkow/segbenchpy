@@ -5,7 +5,7 @@
 #include "csa.hh"
 #include "match.hh"
 
-static const double maxDistDefault = 0.0075;
+static const double maxDistDefault = 0.05;
 static const double outlierCostDefault = 100;
 
 void correspondPixels(double* bmap1, const int rows1, const int cols1, 
