@@ -1,0 +1,9 @@
+*.so
+*.dylib
+*.lai
+*.la
+*.a
+*.pyc
+.ipynb_checkpoints
+build
+*_swig.py
