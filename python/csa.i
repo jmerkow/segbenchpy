@@ -23,7 +23,7 @@ namespace std {
   %template(VecDouble) vector<double>;
   %template(VecVecdouble) vector< vector<double> >;
 }
-
+%rename(_csaAssign) csaAssign;
 %inline %{
     std::vector< std::vector<double> > csaAssign (const int n, 
                 const double* g, const int m, const int three);

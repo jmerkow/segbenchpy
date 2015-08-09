@@ -1,3 +1,3 @@
-from csa_swig import *
-from benchmark_swig import *
-from edges_swig import *
+from csa import *
+from benchmark import *
+from edges import *

@@ -12,8 +12,8 @@ void correspondPixels(double* bmap1, const int rows1, const int cols1,
                       double* bmap2, const int rows2, const int cols2,
                       double* match1, int m1, int n1, 
                       double* match2, int m2, int n2,
-                      double maxDist,
-                      double &cost, double& oc)
+                      double &cost, double& oc,
+                      double maxDist=0.005)
 {
 
     // todo if rows/cols not the same

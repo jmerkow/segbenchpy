@@ -374,7 +374,7 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
     assert (outlierCost > maxDist);
 
     // Initialize match[12] arrays to (-1,-1,-1).
-    printf("%s\n","Initialize match[12] arrays to (-1,-1,-1).");
+    // printf("%s\n","Initialize match[12] arrays to (-1,-1,-1).");
     Array3D<Voxel> match1 (width,height,depth);
     Array3D<Voxel> match2 (width,height,depth);
     for (int x = 0; x < width; x++) {
@@ -391,7 +391,7 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
 
     // Figure out which nodes are matchable, i.e. within maxDist
     // of another node.
-    printf("%s\n","Figure out which nodes are matchable.");
+    // printf("%s\n","Figure out which nodes are matchable.");
     Array3D<bool> matchable1 (width,height,depth);
     Array3D<bool> matchable2 (width,height,depth);
     matchable1.init(false);
@@ -427,7 +427,7 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
     int n1=0, n2=0;
     std::vector<Voxel> nodeToPix1;
     std::vector<Voxel> nodeToPix2;
-    printf("%s\n","Count the number of nodes on each side of the match.");
+    // printf("%s\n","Count the number of nodes on each side of the match.");
     Array3D<int> pixToNode1 (width,height,depth);
     Array3D<int> pixToNode2 (width,height,depth);
     
@@ -450,10 +450,10 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
             }
         }
     }
-    printf("done %s\n","Count the number of nodes on each side of the match.");
+    // printf("done %s\n","Count the number of nodes on each side of the match.");
 
     // Construct the list of edges between pixels within maxDist.
-    printf("%s\n","Construct the list of edges between pixels within maxDist.");
+    // printf("%s\n","Construct the list of edges between pixels within maxDist.");
     std::vector<Edge> edges;
     for (int x1 = 0; x1 < width; x1++) {
         for (int y1 = 0; y1 < height; y1++) {
@@ -485,7 +485,7 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
             }
         }
     }
-   printf("done %s\n","Construct the list of edges between pixels within maxDist.");
+   // printf("done %s\n","Construct the list of edges between pixels within maxDist.");
 
     // The cardinality of the match is n.
     const int n = n1 + n2;
