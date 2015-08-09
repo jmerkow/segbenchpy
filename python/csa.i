@@ -1,4 +1,4 @@
-%module csa
+%module csa_swig
 %include <std_string.i>
 %include <std_map.i>
 %include <stdint.i>

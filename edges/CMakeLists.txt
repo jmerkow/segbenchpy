@@ -1,0 +1,1 @@
+add_library(edges SHARED edgesNms2d.cxx)
