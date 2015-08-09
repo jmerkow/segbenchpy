@@ -33,7 +33,7 @@ class Point3D
 {
 public:
     Point3D () { x = 0; y = 0; z = 0; }
-    Point3D (T x, T y) { this->x = x; this->y = y; this->z = z;}
+    Point3D (T x, T y, T z) { this->x = x; this->y = y; this->z = z;}
     T x,y,z;
 };
 

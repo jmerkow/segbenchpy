@@ -172,6 +172,7 @@ public:
         _alloc(0,0,0);
     }
     Array3D (unsigned d0, unsigned d1, unsigned d2) {
+        printf("d0 %d d1 %d d2 %d\n",d0,d1,d2);
         _alloc(d0,d1,d2);
     }
     ~Array3D () {

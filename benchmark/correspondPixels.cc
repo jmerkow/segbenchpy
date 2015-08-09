@@ -21,15 +21,17 @@ void correspondPixels(double* bmap1, const int rows1, const int cols1,
     double outlierCost = outlierCostDefault;
     const double idiag = sqrt( rows1*rows2 + cols1*cols2 );
     oc = outlierCost*maxDist*idiag;
-    Matrix mat1, mat2;
-    cost = matchEdgeMaps(
-        Matrix(rows1,cols1,bmap1), Matrix(rows2,cols2,bmap2),
-        maxDist*idiag, oc,
-        mat1, mat2);
+    // Matrix mat1, mat2;
+    cost = matchEdgeMaps2D(
+        bmap1, rows1, cols1, 
+        bmap2, rows2, cols2,
+        match1, m1, n1,
+        match2, m2, n2,
+        maxDist*idiag, oc, 6);
     
     // set output arguments
-    memcpy(match1,mat1.data(),mat1.numel()*sizeof(double));
-    memcpy(match2,mat2.data(),mat2.numel()*sizeof(double));
+    // memcpy(match1,mat1.data(),mat1.numel()*sizeof(double));
+    // memcpy(match2,mat2.data(),mat2.numel()*sizeof(double));
 }
 
 
