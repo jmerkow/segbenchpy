@@ -22,16 +22,18 @@ SWIG_LINK_LIBRARIES(${module} ${PYTHON_LIBRARIES} util ${_wrap} util)
 # file(APPEND ${CMAKE_CURRENT_SOURCE_DIR}/segbench/__init__.py "from ${_wrap} import *\n")
 
 # if(UNIX OR APPLE)
+file(RELATIVE_PATH rel_path ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
     set(__linkname "${CMAKE_CURRENT_SOURCE_DIR}/segbench/_${module}.so")
     set(__pynamegen "${CMAKE_CURRENT_BINARY_DIR}/${module}.py")
     set(__pyname "${CMAKE_CURRENT_SOURCE_DIR}/segbench/${module}.py")
+
+    
     add_custom_command(TARGET _${module} POST_BUILD
                        COMMAND ln -sf $<TARGET_LINKER_FILE:_${module}> "${__linkname}"
-                       COMMAND echo ln -sf $<TARGET_LINKER_FILE:_${module}> "${__linkname}"
-                       COMMENT "Creating symlink ${__linkname} -> segbench/_${module}.so")
+                       COMMENT "Creating symlink ${__linkname} -> python/segbench/_${module}.so")
     add_custom_command(TARGET _${_wrap}_swig POST_BUILD
                        COMMAND ln -sf ${__pynamegen} "${__pyname}"
-                       COMMENT "Creating symlink ${__pyname} -> ${__pynamegen}")
+                       COMMENT "Creating symlink ${__pyname} -> python/segbench/${module}.py")
 # endif()
 
 endforeach()
