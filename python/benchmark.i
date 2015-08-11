@@ -31,12 +31,21 @@
                                                 {(double* m1, int m1h, int m1w, int m1z),
                                                  (double* m2, int m2h, int m2w, int m2z) };
 
+%apply (double* IN_ARRAY3, int DIM1, int DIM2, int DIM3) 
+                                                {(const double* bmap1, const int rows1, const int cols1, const int aisles1),
+                                                (const double* bmap2, const int rows2, const int cols2, const int aisles2)};
+
+%apply (double* INPLACE_ARRAY3, int DIM1, int DIM2, int DIM3) 
+                                                {(double* match1, int m1, int n1, int k1),
+                                                 (double* match2, int m2, int n2, int k2) };
+
 
 %include "typemaps.i"
 %apply double& OUTPUT {double& cost};
 %apply double& OUTPUT {double& oc};
 
 %rename(_correspondPixels) correspondPixels;
+%rename(_correspondVoxels) correspondVoxels;
 %rename(_matchEdgeMaps2D) matchEdgeMaps2D;
 %rename(_matchEdgeMaps3D) matchEdgeMaps3D;
 
@@ -47,6 +56,14 @@ void correspondPixels(const double* bmap1, const int rows1, const int cols1,
                       double* match2, int m2, int n2,
                       double &cost, double& oc,
                       double maxDist=0.005);
+
+void correspondVoxels(const double* bmap1, const int rows1, const int cols1, const int aisles1,
+                      const double* bmap2, const int rows2, const int cols2, const int aisles2,
+                      double* match1, int m1, int n1, int k1, 
+                      double* match2, int m2, int n2, int k2,
+                      double &cost, double& oc,
+                      double maxDist=0.005);
+
 double matchEdgeMaps2D(const double* bmap1, const int height, const int width, 
                      const double* bmap2, const int height2, const int width2,
                      double* m1, int m1h, int m1w, 
