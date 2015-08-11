@@ -8,8 +8,8 @@
 static const double maxDistDefault = 0.05;
 static const double outlierCostDefault = 100;
 
-void correspondPixels(double* bmap1, const int rows1, const int cols1, 
-                      double* bmap2, const int rows2, const int cols2,
+void correspondPixels(const double* bmap1, const int rows1, const int cols1, 
+                      const double* bmap2, const int rows2, const int cols2,
                       double* match1, int m1, int n1, 
                       double* match2, int m2, int n2,
                       double &cost, double& oc,

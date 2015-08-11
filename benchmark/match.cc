@@ -1,5 +1,6 @@
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <math.h>
 #include <vector>
 #include <algorithm>
@@ -21,7 +22,9 @@ struct Edge {
 static const int multiplier = 100;
 
 // The degree of outlier connections.
-static const int degree = 6;
+// static const int degree = 6;
+
+
 
 double matchEdgeMaps2D(const double* bmap1, const int height, const int width, 
                      const double* bmap2, const int height2, const int width2,
@@ -40,12 +43,12 @@ double matchEdgeMaps2D(const double* bmap1, const int height, const int width,
     assert (outlierCost > maxDist);
 
     // Initialize match[12] arrays to (-1,-1).
-    Array2D<Pixel> match1 (width,height);
-    Array2D<Pixel> match2 (width,height);
+    std::vector< std::vector< Pixel > > match1 (height , std::vector< Pixel > ( width, Pixel(-1,-1) ));
+    std::vector< std::vector< Pixel > > match2 (height , std::vector< Pixel > ( width, Pixel(-1,-1) ));
     for (int x = 0; x < width; x++) {
         for (int y = 0; y < height; y++) {
-            match1(x,y) = Pixel(-1,-1);
-            match2(x,y) = Pixel(-1,-1);
+            match1[y][x] = Pixel(-1,-1);
+            match2[y][x] = Pixel(-1,-1);
         }
     }
 
@@ -54,10 +57,10 @@ double matchEdgeMaps2D(const double* bmap1, const int height, const int width,
 
     // Figure out which nodes are matchable, i.e. within maxDist
     // of another node.
-    Array2D<bool> matchable1 (width,height);
-    Array2D<bool> matchable2 (width,height);
-    matchable1.init(false);
-    matchable2.init(false);
+    std::vector< std::vector< int > > matchable1 (height, std::vector< int > ( width, 0 ));
+    std::vector< std::vector< int > > matchable2 (height, std::vector< int > ( width, 0 ));
+
+
     for (int y1 = 0; y1 < height; y1++) {
         for (int x1 = 0; x1 < width; x1++) {
             if (!bmap1[y1*width+x1]) { continue; }
@@ -70,8 +73,8 @@ double matchEdgeMaps2D(const double* bmap1, const int height, const int width,
                     if (x2 < 0 || x2 >= width) { continue; }
                     if (y2 < 0 || y2 >= height) { continue; }
                     if (!bmap2[y2*width+x2]) { continue; }
-                    matchable1(x1,y1) = true;
-                    matchable2(x2,y2) = true;
+                    matchable1[y1][x1] = 1;
+                    matchable2[y2][x2] = 1;
                 }
             }
         }
@@ -83,31 +86,28 @@ double matchEdgeMaps2D(const double* bmap1, const int height, const int width,
     int n1=0, n2=0;
     std::vector<Pixel> nodeToPix1;
     std::vector<Pixel> nodeToPix2;
-    Array2D<int> pixToNode1 (width,height);
-    Array2D<int> pixToNode2 (width,height);
+    std::vector< std::vector< int > > pixToNode1 (height ,std::vector< int > (width, -1));
+    std::vector< std::vector< int > > pixToNode2 (height ,std::vector< int > (width, -1));
     for (int x = 0; x < width; x++) {
         for (int y = 0; y < height; y++) {
-            pixToNode1(x,y) = -1;
-            pixToNode2(x,y) = -1;
             Pixel pix (x,y);
-            if (matchable1(x,y)) {
-                pixToNode1(x,y) = n1;
+            if (matchable1[y][x]) {
+                pixToNode1[y][x] = n1;
                 nodeToPix1.push_back(pix);
                 n1++;
             }
-            if (matchable2(x,y)) {
-                pixToNode2(x,y) = n2;
+            if (matchable2[y][x]) {
+                pixToNode2[y][x] = n2;
                 nodeToPix2.push_back(pix);
                 n2++;
             }
         }
     }
-
     // Construct the list of edges between pixels within maxDist.
     std::vector<Edge> edges;
     for (int x1 = 0; x1 < width; x1++) {
         for (int y1 = 0; y1 < height; y1++) {
-            if (!matchable1(x1,y1)) { continue; }
+            if ( matchable1[y1][x1]==0) { continue; }
             for (int u = -r; u <= r; u++) {
                 for (int v = -r; v <= r; v++) {
                     const double d2 = u*u + v*v;
@@ -116,11 +116,12 @@ double matchEdgeMaps2D(const double* bmap1, const int height, const int width,
                     const int y2 = y1 + v;
                     if (x2 < 0 || x2 >= width) { continue; }
                     if (y2 < 0 || y2 >= height) { continue; }
-                    if (!matchable2(x2,y2)) { continue; }
+                    if ( matchable2[y2][x2]==0 ) { continue; }
                     Edge e; 
-                    e.i = pixToNode1(x1,y1);
-                    e.j = pixToNode2(x2,y2);
+                    e.i = pixToNode1[y1][x1];
+                    e.j = pixToNode2[y2][x2];
                     e.w = sqrt(d2);
+                    // printf("[%d,%d][%d,%d] %d %d | %d %d\n",matchable1[y1][x1],matchable2[y2][x2],e.i,e.j);
                     assert (e.i >= 0 && e.i < n1);
                     assert (e.j >= 0 && e.j < n2);
                     assert (e.w < outlierCost);
@@ -307,19 +308,19 @@ double matchEdgeMaps2D(const double* bmap1, const int height, const int width,
         const Pixel pix1 = nodeToPix1[i];
         const Pixel pix2 = nodeToPix2[j];
         // record edges
-        match1(pix1.x,pix1.y) = pix2;
-        match2(pix2.x,pix2.y) = pix1;
+        match1[pix1.y][pix1.x] = pix2;
+        match2[pix2.y][pix2.x] = pix1;
     }
     for (int x = 0; x < width; x++) {
         for (int y = 0; y < height; y++) {
             if (bmap1[y*width+x]) {
-                if (match1(x,y) != Pixel(-1,-1)) {
-                    m1[y*width+x] = match1(x,y).x*height + match1(x,y).y + 1;
+                if (match1[y][x] != Pixel(-1,-1)) {
+                    m1[y*width+x] = match1[y][x].y*width + match1[y][x].x;
                 }
             }
             if (bmap2[y*width+x]) {
-                if (match2(x,y) != Pixel(-1,-1)) {
-                    m2[y*width+x] = match2(x,y).x*height + match2(x,y).y + 1;
+                if (match2[y][x] != Pixel(-1,-1)) {
+                    m2[y*width+x] = match2[y][x].y*width + match2[y][x].x;
                 }
             }
         }
@@ -330,20 +331,20 @@ double matchEdgeMaps2D(const double* bmap1, const int height, const int width,
     for (int x = 0; x < width; x++) {
         for (int y = 0; y < height; y++) {
             if (bmap1[y*width+x]) {
-                if (match1(x,y) == Pixel(-1,-1)) {
+                if (match1[y][x] == Pixel(-1,-1)) {
                     cost += outlierCost;
                 } else {
-                    const int dx = x - match1(x,y).x;
-                    const int dy = y - match1(x,y).y;
+                    const int dx = x - match1[y][x].x;
+                    const int dy = y - match1[y][x].y;
                     cost += 0.5 * sqrt (dx*dx + dy*dy);
                 }
             }
             if (bmap2[y*width+x]) {
-                if (match2(x,y) == Pixel(-1,-1)) {
+                if (match2[y][x] == Pixel(-1,-1)) {
                     cost += outlierCost;
                 } else {
-                    const int dx = x - match2(x,y).x;
-                    const int dy = y - match2(x,y).y;
+                    const int dx = x - match2[y][x].x;
+                    const int dy = y - match2[y][x].y;
                     cost += 0.5 * sqrt (dx*dx + dy*dy);
                 }
             }

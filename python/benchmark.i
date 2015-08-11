@@ -13,14 +13,15 @@
 
 
 
-%apply (double* INPLACE_ARRAY2, int DIM1, int DIM2) {(double* bmap1, const int rows1, const int cols1), 
-                                                (double* bmap2, const int rows2, const int cols2)};
+%apply (double* IN_ARRAY2, int DIM1, int DIM2) {(const double* bmap1, const int rows1, const int cols1), 
+                                                (const double* bmap2, const int rows2, const int cols2)};
 
 %apply (double* IN_ARRAY2, int DIM1, int DIM2) {(const double* bmap1, const int height, const int width),
                                                 (const double* bmap2, const int height2, const int width2)};
 %apply (double* INPLACE_ARRAY2, int DIM1, int DIM2) {(double* match1, int m1, int n1),(double* match2, int m2, int n2)};
 
-%apply (double* INPLACE_ARRAY2, int DIM1, int DIM2) {(double* m1, int m1h, int m1w),(double* m2, int m2h, int m2w)};
+%apply (double* INPLACE_ARRAY2, int DIM1, int DIM2) {(double* m1, int m1h, int m1w),
+                                                     (double* m2, int m2h, int m2w)};
 
 
 %apply (double* IN_ARRAY3, int DIM1, int DIM2, int DIM3) 
@@ -40,8 +41,8 @@
 %rename(_matchEdgeMaps3D) matchEdgeMaps3D;
 
 %inline %{
-void correspondPixels(double* bmap1, const int rows1, const int cols1, 
-                      double* bmap2, const int rows2, const int cols2,
+void correspondPixels(const double* bmap1, const int rows1, const int cols1, 
+                      const double* bmap2, const int rows2, const int cols2,
                       double* match1, int m1, int n1, 
                       double* match2, int m2, int n2,
                       double &cost, double& oc,
