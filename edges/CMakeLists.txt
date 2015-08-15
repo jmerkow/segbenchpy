@@ -1,1 +1,1 @@
-add_library(edges SHARED edgesNms2d.cxx)
+add_library(edges SHARED edgesNms2d.cxx edgesNms3d.cxx)

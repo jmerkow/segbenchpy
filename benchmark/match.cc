@@ -388,7 +388,8 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
     }
 
     // Radius of search window.
-    const int r = (int) ceil (maxDist); 
+    const int r = (int) ceil (maxDist);
+    printf("max dist: %f \n", maxDist);
 
     // Figure out which nodes are matchable, i.e. within maxDist
     // of another node.

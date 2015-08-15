@@ -39,7 +39,7 @@ void correspondVoxels(const double* bmap1, const int rows1, const int cols1, con
                       double* match1, int m1, int n1, int k1, 
                       double* match2, int m2, int n2, int k2,
                       double &cost, double& oc,
-                      double maxDist=0.005)
+                      double maxDist=0.005,int degree=6)
 {
 
     // todo if rows/cols not the same
@@ -53,7 +53,7 @@ void correspondVoxels(const double* bmap1, const int rows1, const int cols1, con
         bmap2, rows2, cols2, aisles2,
         match1, m1, n1, k1,
         match2, m2, n2, k2,
-        maxDist*idiag, oc, 6);
+        maxDist*idiag, oc, degree);
     
     // set output arguments
     // memcpy(match1,mat1.data(),mat1.numel()*sizeof(double));
