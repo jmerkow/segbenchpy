@@ -19,7 +19,7 @@ struct Edge {
 
 // CSA code needs integer weights.  Use this multiplier to convert
 // floating-point weights to integers.
-static const int multiplier = 100;
+static const int multiplier = 1000;
 
 // The degree of outlier connections.
 // static const int degree = 6;
@@ -45,8 +45,8 @@ double matchEdgeMaps2D(const double* bmap1, const int height, const int width,
     // Initialize match[12] arrays to (-1,-1).
     std::vector< std::vector< Pixel > > match1 (height , std::vector< Pixel > ( width, Pixel(-1,-1) ));
     std::vector< std::vector< Pixel > > match2 (height , std::vector< Pixel > ( width, Pixel(-1,-1) ));
-    for (int x = 0; x < width; x++) {
-        for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width; ++x) {
+        for (int y = 0; y < height; ++y) {
             match1[y][x] = Pixel(-1,-1);
             match2[y][x] = Pixel(-1,-1);
         }
@@ -61,11 +61,11 @@ double matchEdgeMaps2D(const double* bmap1, const int height, const int width,
     std::vector< std::vector< int > > matchable2 (height, std::vector< int > ( width, 0 ));
 
 
-    for (int y1 = 0; y1 < height; y1++) {
-        for (int x1 = 0; x1 < width; x1++) {
+    for (int y1 = 0; y1 < height; ++y1) {
+        for (int x1 = 0; x1 < width; ++x1) {
             if (!bmap1[y1*width+x1]) { continue; }
-            for (int v = -r; v <= r; v++) {
-                for (int u = -r; u <= r; u++) {
+            for (int v = -r; v <= r; ++v) {
+                for (int u = -r; u <= r; ++u) {
                     const double d2 = u*u + v*v;
                     if (d2 > maxDist*maxDist) { continue; }
                     const int x2 = x1 + u;
@@ -88,8 +88,8 @@ double matchEdgeMaps2D(const double* bmap1, const int height, const int width,
     std::vector<Pixel> nodeToPix2;
     std::vector< std::vector< int > > pixToNode1 (height ,std::vector< int > (width, -1));
     std::vector< std::vector< int > > pixToNode2 (height ,std::vector< int > (width, -1));
-    for (int x = 0; x < width; x++) {
-        for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width; ++x) {
+        for (int y = 0; y < height; ++y) {
             Pixel pix (x,y);
             if (matchable1[y][x]) {
                 pixToNode1[y][x] = n1;
@@ -105,11 +105,11 @@ double matchEdgeMaps2D(const double* bmap1, const int height, const int width,
     }
     // Construct the list of edges between pixels within maxDist.
     std::vector<Edge> edges;
-    for (int x1 = 0; x1 < width; x1++) {
-        for (int y1 = 0; y1 < height; y1++) {
+    for (int x1 = 0; x1 < width; ++x1) {
+        for (int y1 = 0; y1 < height; ++y1) {
             if ( matchable1[y1][x1]==0) { continue; }
-            for (int u = -r; u <= r; u++) {
-                for (int v = -r; v <= r; v++) {
+            for (int u = -r; u <= r; ++u) {
+                for (int v = -r; v <= r; ++v) {
                     const double d2 = u*u + v*v;
                     if (d2 > maxDist*maxDist) { continue; }
                     const int x2 = x1 + u;
@@ -169,7 +169,7 @@ double matchEdgeMaps2D(const double* bmap1, const int height, const int width,
     Array2D<int> igraph (m,3);
     int count = 0;
     // real edges
-    for (int a = 0; a < (int)edges.size(); a++) {
+    for (int a = 0; a < (int)edges.size(); ++a) {
         int i = edges[a].i;
         int j = edges[a].j;
         assert (i >= 0 && i < n1);
@@ -180,9 +180,9 @@ double matchEdgeMaps2D(const double* bmap1, const int height, const int width,
         count++;
     }
     // outliers edges for map1, exclude diagonal
-    for (int i = 0; i < n1; i++) {
+    for (int i = 0; i < n1; ++i) {
         kOfN(d1,n1-1,outliers.data());
-        for (int a = 0; a < d1; a++) {
+        for (int a = 0; a < d1; ++a) {
             int j = outliers(a);
             if (j >= i) { j++; }
             assert (i != j);
@@ -194,9 +194,9 @@ double matchEdgeMaps2D(const double* bmap1, const int height, const int width,
         }
     }
     // outliers edges for map2, exclude diagonal
-    for (int j = 0; j < n2; j++) {
+    for (int j = 0; j < n2; ++j) {
         kOfN(d2,n2-1,outliers.data());
-        for (int a = 0; a < d2; a++) {
+        for (int a = 0; a < d2; ++a) {
             int i = outliers(a);
             if (i >= j) { i++; }
             assert (i != j);
@@ -208,9 +208,9 @@ double matchEdgeMaps2D(const double* bmap1, const int height, const int width,
         }
     }
     // outlier-to-outlier edges
-    for (int i = 0; i < nmax; i++) {
+    for (int i = 0; i < nmax; ++i) {
         kOfN(d3,nmin,outliers.data());
-        for (int a = 0; a < d3; a++) {
+        for (int a = 0; a < d3; ++a) {
             const int j = outliers(a);
             assert (j >= 0 && j < nmin);
             if (n1 < n2) {
@@ -229,13 +229,13 @@ double matchEdgeMaps2D(const double* bmap1, const int height, const int width,
         }
     }
     // perfect match overlay (diagonal)
-    for (int i = 0; i < n1; i++) {
+    for (int i = 0; i < n1; ++i) {
         igraph(count,0) = i;
         igraph(count,1) = n2 + i;
         igraph(count,2) = ow * multiplier;
         count++;
     }
-    for (int i = 0; i < n2; i++) {
+    for (int i = 0; i < n2; ++i) {
         igraph(count,0) = n1 + i;
         igraph(count,1) = i;
         igraph(count,2) = ow * multiplier;
@@ -244,7 +244,7 @@ double matchEdgeMaps2D(const double* bmap1, const int height, const int width,
     assert (count == m);
 
     // Check all the edges, and set the values up for CSA.
-    for (int i = 0; i < m; i++) {
+    for (int i = 0; i < m; ++i) {
         assert(igraph(i,0) >= 0 && igraph(i,0) < n);
         assert(igraph(i,1) >= 0 && igraph(i,1) < n);
         igraph(i,0) += 1;
@@ -256,7 +256,7 @@ double matchEdgeMaps2D(const double* bmap1, const int height, const int width,
     assert(csa.edges()==n);
 
     Array2D<int> ograph (n,3);
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; ++i) {
         int a,b,c;
         csa.edge(i,a,b,c);
         ograph(i,0)=a-1; ograph(i,1)=b-1-n; ograph(i,2)=c;
@@ -266,7 +266,7 @@ double matchEdgeMaps2D(const double* bmap1, const int height, const int width,
     // Count the number of high-cost edges from the perfect match
     // overlay that were used in the match.
     int overlayCount = 0;
-    for (int a = 0; a < n; a++) {
+    for (int a = 0; a < n; ++a) {
         const int i = ograph(a,0);
         const int j = ograph(a,1);
         const int c = ograph(a,2);
@@ -297,7 +297,7 @@ double matchEdgeMaps2D(const double* bmap1, const int height, const int width,
     }
 
     // Compute match arrays.
-    for (int a = 0; a < n; a++) {
+    for (int a = 0; a < n; ++a) {
         // node ids
         const int i = ograph(a,0);
         const int j = ograph(a,1);
@@ -311,8 +311,8 @@ double matchEdgeMaps2D(const double* bmap1, const int height, const int width,
         match1[pix1.y][pix1.x] = pix2;
         match2[pix2.y][pix2.x] = pix1;
     }
-    for (int x = 0; x < width; x++) {
-        for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width; ++x) {
+        for (int y = 0; y < height; ++y) {
             if (bmap1[y*width+x]) {
                 if (match1[y][x] != Pixel(-1,-1)) {
                     m1[y*width+x] = match1[y][x].y*width + match1[y][x].x;
@@ -328,8 +328,8 @@ double matchEdgeMaps2D(const double* bmap1, const int height, const int width,
 
     // Compute the match cost.
     double cost = 0;
-    for (int x = 0; x < width; x++) {
-        for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width; ++x) {
+        for (int y = 0; y < height; ++y) {
             if (bmap1[y*width+x]) {
                 if (match1[y][x] == Pixel(-1,-1)) {
                     cost += outlierCost;
@@ -375,11 +375,10 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
     assert (outlierCost > maxDist);
 
     // Initialize match[12] arrays to (-1,-1,-1).
-    // printf("%s\n","Initialize match[12] arrays to (-1,-1,-1).");
     Array3D<Voxel> match1 (width,height,depth);
     Array3D<Voxel> match2 (width,height,depth);
-    for (int x = 0; x < width; x++) {
-        for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width; ++x) {
+        for (int y = 0; y < height; ++y) {
             for (int z = 0; z < depth; ++z) {
                 match1(x,y,z) = Voxel(-1,-1,-1);
                 match2(x,y,z) = Voxel(-1,-1,-1);
@@ -398,13 +397,13 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
     Array3D<bool> matchable2 (width,height,depth);
     matchable1.init(false);
     matchable2.init(false);
-    for (int y1 = 0; y1 < height; y1++) {
-        for (int x1 = 0; x1 < width; x1++) {
-            for (int z1 = 0; z1 < depth; z1++) {
+    for (int y1 = 0; y1 < height; ++y1) {
+        for (int x1 = 0; x1 < width; ++x1) {
+            for (int z1 = 0; z1 < depth; ++z1) {
                 if (!bmap1[(y1*width+x1)*depth+z1]) { continue; }
-                for (int v = -r; v <= r; v++) {
-                    for (int u = -r; u <= r; u++) {
-                        for (int w = -r; w <= r; w++) {
+                for (int v = -r; v <= r; ++v) {
+                    for (int u = -r; u <= r; ++u) {
+                        for (int w = -r; w <= r; ++w) {
                             const double d2 = u*u + v*v + w*w;
                             if (d2 > maxDist*maxDist) { continue; }
                             const int x2 = x1 + u;
@@ -433,9 +432,9 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
     Array3D<int> pixToNode1 (width,height,depth);
     Array3D<int> pixToNode2 (width,height,depth);
     
-    for (int x = 0; x < width; x++) {
-        for (int y = 0; y < height; y++) {
-            for (int z = 0; z < depth; z++) {
+    for (int x = 0; x < width; ++x) {
+        for (int y = 0; y < height; ++y) {
+            for (int z = 0; z < depth; ++z) {
                 pixToNode1(x,y,z) = -1;
                 pixToNode2(x,y,z) = -1;
                 Voxel pix (x,y,z);
@@ -457,13 +456,13 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
     // Construct the list of edges between pixels within maxDist.
     // printf("%s\n","Construct the list of edges between pixels within maxDist.");
     std::vector<Edge> edges;
-    for (int x1 = 0; x1 < width; x1++) {
-        for (int y1 = 0; y1 < height; y1++) {
-            for (int z1 = 0; z1 < depth; z1++) {
+    for (int x1 = 0; x1 < width; ++x1) {
+        for (int y1 = 0; y1 < height; ++y1) {
+            for (int z1 = 0; z1 < depth; ++z1) {
                 if (!matchable1(x1,y1,z1)) { continue; }
-                for (int u = -r; u <= r; u++) {
-                    for (int v = -r; v <= r; v++) {
-                        for (int w = -r; w <= r; w++) {
+                for (int u = -r; u <= r; ++u) {
+                    for (int v = -r; v <= r; ++v) {
+                        for (int w = -r; w <= r; ++w) {
                             const double d2 = u*u + v*v + w*w;
                             if (d2 > maxDist*maxDist) { continue; }
                             const int x2 = x1 + u;
@@ -528,7 +527,7 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
     Array2D<int> igraph (m,3);
     int count = 0;
     // real edges
-    for (int a = 0; a < (int)edges.size(); a++) {
+    for (int a = 0; a < (int)edges.size(); ++a) {
         int i = edges[a].i;
         int j = edges[a].j;
         assert (i >= 0 && i < n1);
@@ -540,9 +539,9 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
     }
 
     // outliers edges for map1, exclude diagonal
-    for (int i = 0; i < n1; i++) {
+    for (int i = 0; i < n1; ++i) {
         kOfN(d1,n1-1,outliers.data());
-        for (int a = 0; a < d1; a++) {
+        for (int a = 0; a < d1; ++a) {
             int j = outliers(a);
             if (j >= i) { j++; }
             assert (i != j);
@@ -554,9 +553,9 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
         }
     }
     // outliers edges for map2, exclude diagonal
-    for (int j = 0; j < n2; j++) {
+    for (int j = 0; j < n2; ++j) {
         kOfN(d2,n2-1,outliers.data());
-        for (int a = 0; a < d2; a++) {
+        for (int a = 0; a < d2; ++a) {
             int i = outliers(a);
             if (i >= j) { i++; }
             assert (i != j);
@@ -568,9 +567,9 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
         }
     }
     // outlier-to-outlier edges
-    for (int i = 0; i < nmax; i++) {
+    for (int i = 0; i < nmax; ++i) {
         kOfN(d3,nmin,outliers.data());
-        for (int a = 0; a < d3; a++) {
+        for (int a = 0; a < d3; ++a) {
             const int j = outliers(a);
             assert (j >= 0 && j < nmin);
             if (n1 < n2) {
@@ -589,13 +588,13 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
         }
     }
     // perfect match overlay (diagonal)
-    for (int i = 0; i < n1; i++) {
+    for (int i = 0; i < n1; ++i) {
         igraph(count,0) = i;
         igraph(count,1) = n2 + i;
         igraph(count,2) = ow * multiplier;
         count++;
     }
-    for (int i = 0; i < n2; i++) {
+    for (int i = 0; i < n2; ++i) {
         igraph(count,0) = n1 + i;
         igraph(count,1) = i;
         igraph(count,2) = ow * multiplier;
@@ -604,7 +603,7 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
     assert (count == m);
 
     // Check all the edges, and set the values up for CSA.
-    for (int i = 0; i < m; i++) {
+    for (int i = 0; i < m; ++i) {
         assert(igraph(i,0) >= 0 && igraph(i,0) < n);
         assert(igraph(i,1) >= 0 && igraph(i,1) < n);
         igraph(i,0) += 1;
@@ -616,7 +615,7 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
     assert(csa.edges()==n);
 
     Array2D<int> ograph (n,3);
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; ++i) {
         int a,b,c;
         csa.edge(i,a,b,c);
         ograph(i,0)=a-1; ograph(i,1)=b-1-n; ograph(i,2)=c;
@@ -626,7 +625,7 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
     // Count the number of high-cost edges from the perfect match
     // overlay that were used in the match.
     int overlayCount = 0;
-    for (int a = 0; a < n; a++) {
+    for (int a = 0; a < n; ++a) {
         const int i = ograph(a,0);
         const int j = ograph(a,1);
         const int c = ograph(a,2);
@@ -658,7 +657,7 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
     }
 
     // Compute match arrays.
-    for (int a = 0; a < n; a++) {
+    for (int a = 0; a < n; ++a) {
         // node ids
         const int i = ograph(a,0);
         const int j = ograph(a,1);
@@ -672,9 +671,9 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
         match1(pix1.x,pix1.y,pix1.z) = pix2;
         match2(pix2.x,pix2.y,pix2.z) = pix1;
     }
-    for (int x = 0; x < width; x++) {
-        for (int y = 0; y < height; y++) {
-            for (int z = 0; z < depth; z++) {
+    for (int x = 0; x < width; ++x) {
+        for (int y = 0; y < height; ++y) {
+            for (int z = 0; z < depth; ++z) {
                 if (bmap1[(y*width+x)*depth+z]) {
                     if (match1(x,y,z) != Voxel(-1,-1,-1)) {
                         m1[(y*width+x)*depth+z] = 
@@ -699,9 +698,9 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
 
     // Compute the match cost.
     double cost = 0;
-    for (int x = 0; x < width; x++) {
-        for (int y = 0; y < height; y++) {
-            for (int z = 0; z < depth; z++) {
+    for (int x = 0; x < width; ++x) {
+        for (int y = 0; y < height; ++y) {
+            for (int z = 0; z < depth; ++z) {
                 if (bmap1[(y*width+x)*depth+z]) {
                     if (match1(x,y,z) == Voxel(-1,-1,-1)) {
                         cost += outlierCost;
