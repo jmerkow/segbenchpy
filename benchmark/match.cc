@@ -19,7 +19,7 @@ struct Edge {
 
 // CSA code needs integer weights.  Use this multiplier to convert
 // floating-point weights to integers.
-static const int multiplier = 1000;
+// static const int multiplier = 10000;
 
 // The degree of outlier connections.
 // static const int degree = 6;
@@ -32,6 +32,7 @@ double matchEdgeMaps2D(const double* bmap1, const int height, const int width,
                      double* m2, int m2h, int m2w,
                      double maxDist, double outlierCost, int degree)
 {
+    const int multiplier = 100;
     // Check global constants.
     assert (degree > 0);
     assert (multiplier > 0);
@@ -362,7 +363,7 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
                      double* m2, int m2h, int m2w, int m2z,
                      double maxDist, double outlierCost, int degree)
 {
-
+    const int multiplier = 10000;
     assert (degree > 0);
     assert (multiplier > 0);
 
@@ -375,13 +376,17 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
     assert (outlierCost > maxDist);
 
     // Initialize match[12] arrays to (-1,-1,-1).
-    Array3D<Voxel> match1 (width,height,depth);
-    Array3D<Voxel> match2 (width,height,depth);
+    std::vector<std::vector<std::vector<Voxel> > > 
+            match1 (height , std::vector<std::vector<Voxel> > ( 
+                width, std::vector<Voxel> (depth, Voxel(-1,-1,-1) ) ) );
+    std::vector<std::vector<std::vector<Voxel> > > 
+            match2 (height , std::vector<std::vector<Voxel> > ( 
+                width, std::vector<Voxel> (depth, Voxel(-1,-1,-1) ) ) );
     for (int x = 0; x < width; ++x) {
         for (int y = 0; y < height; ++y) {
             for (int z = 0; z < depth; ++z) {
-                match1(x,y,z) = Voxel(-1,-1,-1);
-                match2(x,y,z) = Voxel(-1,-1,-1);
+                match1[y][x][z] = Voxel(-1,-1,-1);
+                match2[y][x][z] = Voxel(-1,-1,-1);
             }
         }
     }
@@ -389,38 +394,44 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
     // Radius of search window.
     const int r = (int) ceil (maxDist);
     printf("max dist: %f \n", maxDist);
-
+    int c_matchable =0;
+    int c_matchable2 =0;
     // Figure out which nodes are matchable, i.e. within maxDist
     // of another node.
     // printf("%s\n","Figure out which nodes are matchable.");
-    Array3D<bool> matchable1 (width,height,depth);
-    Array3D<bool> matchable2 (width,height,depth);
-    matchable1.init(false);
-    matchable2.init(false);
+    std::vector<std::vector<std::vector<int> > > 
+        matchable1 (height , std::vector<std::vector<int> > ( 
+            width, std::vector<int> (depth, 0 ) ) );
+    std::vector<std::vector<std::vector<int> > > 
+        matchable2 (height , std::vector<std::vector<int> > ( 
+            width, std::vector<int> (depth, 0 ) ) );
     for (int y1 = 0; y1 < height; ++y1) {
         for (int x1 = 0; x1 < width; ++x1) {
             for (int z1 = 0; z1 < depth; ++z1) {
                 if (!bmap1[(y1*width+x1)*depth+z1]) { continue; }
                 for (int v = -r; v <= r; ++v) {
                     for (int u = -r; u <= r; ++u) {
-                        for (int w = -r; w <= r; ++w) {
-                            const double d2 = u*u + v*v + w*w;
+                        for (int ww = -r; ww <= r; ++ww) {
+                            const double d2 = u*u + v*v + ww*ww;
                             if (d2 > maxDist*maxDist) { continue; }
                             const int x2 = x1 + u;
                             const int y2 = y1 + v;
-                            const int z2 = z1 + w;
+                            const int z2 = z1 + ww;
                             if (x2 < 0 || x2 >= width) { continue; }
                             if (y2 < 0 || y2 >= height) { continue; }
                             if (z2 < 0 || z2 >= depth) { continue; }
-                            if (!bmap2[(y1*width+x1)*depth+z1]) { continue; }
-                            matchable1(x1,y1,z1) = true;
-                            matchable2(x2,y2,z2) = true;
+                            if (!bmap2[(y2*width+x2)*depth+z2]) { continue; }
+                            matchable1[y1][x1][z1] = true;
+                            matchable2[y2][x2][z2] = true;
+                            c_matchable++;
                         }
                     }
                 }
             }
         }
     }
+
+    // printf("c_matchable: %d \n", c_matchable);
 
     // Count the number of nodes on each side of the match.
     // Construct nodeID->pixel and pixel->nodeID maps.
@@ -429,22 +440,26 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
     std::vector<Voxel> nodeToPix1;
     std::vector<Voxel> nodeToPix2;
     // printf("%s\n","Count the number of nodes on each side of the match.");
-    Array3D<int> pixToNode1 (width,height,depth);
-    Array3D<int> pixToNode2 (width,height,depth);
+    std::vector<std::vector<std::vector<int> > > 
+        pixToNode1 (height , std::vector<std::vector<int> > ( 
+            width, std::vector<int> (depth, -1 ) ) );
+    std::vector<std::vector<std::vector<int> > > 
+        pixToNode2 (height , std::vector<std::vector<int> > ( 
+            width, std::vector<int> (depth, -1 ) ) );
     
     for (int x = 0; x < width; ++x) {
         for (int y = 0; y < height; ++y) {
             for (int z = 0; z < depth; ++z) {
-                pixToNode1(x,y,z) = -1;
-                pixToNode2(x,y,z) = -1;
+                pixToNode1[y][x][z] = -1;
+                pixToNode2[y][x][z] = -1;
                 Voxel pix (x,y,z);
-                if (matchable1(x,y,z)) {
-                    pixToNode1(x,y,z) = n1;
+                if (matchable1[y][x][z]) {
+                    pixToNode1[y][x][z] = n1;
                     nodeToPix1.push_back(pix);
                     n1++;
                 }
-                if (matchable2(x,y,z)) {
-                    pixToNode2(x,y,z) = n2;
+                if (matchable2[y][x][z]) {
+                    pixToNode2[y][x][z] = n2;
                     nodeToPix2.push_back(pix);
                     n2++;
                 }
@@ -455,38 +470,40 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
 
     // Construct the list of edges between pixels within maxDist.
     // printf("%s\n","Construct the list of edges between pixels within maxDist.");
+    double md = 0;
     std::vector<Edge> edges;
     for (int x1 = 0; x1 < width; ++x1) {
         for (int y1 = 0; y1 < height; ++y1) {
             for (int z1 = 0; z1 < depth; ++z1) {
-                if (!matchable1(x1,y1,z1)) { continue; }
+                if (!matchable1[y1][x1][z1]) { continue; }
                 for (int u = -r; u <= r; ++u) {
                     for (int v = -r; v <= r; ++v) {
-                        for (int w = -r; w <= r; ++w) {
-                            const double d2 = u*u + v*v + w*w;
+                        for (int ww = -r; ww <= r; ++ww) {
+                            const double d2 = u*u + v*v + ww*ww;
                             if (d2 > maxDist*maxDist) { continue; }
                             const int x2 = x1 + u;
                             const int y2 = y1 + v;
-                            const int z2 = z1 + w;
+                            const int z2 = z1 + ww;
                             if (x2 < 0 || x2 >= width) { continue; }
                             if (y2 < 0 || y2 >= height) { continue; }
                             if (z2 < 0 || z2 >= depth) { continue; }
-                            if (!matchable2(x2,y2,z2)) { continue; }
+                            if (!matchable2[y2][x2][z2]) { continue; }
                             Edge e; 
-                            e.i = pixToNode1(x1,y1,z1);
-                            e.j = pixToNode2(x2,y2,z2);
+                            e.i = pixToNode1[y1][x1][z1];
+                            e.j = pixToNode2[y2][x2][z2];
                             e.w = sqrt(d2);
                             assert (e.i >= 0 && e.i < n1);
                             assert (e.j >= 0 && e.j < n2);
                             assert (e.w < outlierCost);
                             edges.push_back(e);
+                            md = std::max(md,sqrt(d2));
                         }
                     }
                 }
             }
         }
     }
-   // printf("done %s\n","Construct the list of edges between pixels within maxDist.");
+    // printf("max weight in connections %d\n",md);
 
     // The cardinality of the match is n.
     const int n = n1 + n2;
@@ -521,6 +538,7 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
 
     // Scratch array for outlier edges.
     Array1D<int> outliers (dmax);
+    // printf("dmax %d\n",dmax);
 
     // Construct the input graph for the assignment problem.
     // igraph is (node1, node2, weight)
@@ -643,7 +661,7 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
         const int dx = pix1.x - pix2.x;
         const int dy = pix1.y - pix2.y;
         const int dz = pix1.z - pix2.z;
-        const int w = (int) rint (sqrt(dx*dx+dy*dy+dz*dz)*multiplier);
+        const int w = (int) rint (sqrt(dx*dx + dy*dy + dz*dz)*multiplier);
         assert (w == c);
     }
 
@@ -668,27 +686,30 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
         const Voxel pix1 = nodeToPix1[i];
         const Voxel pix2 = nodeToPix2[j];
         // record edges
-        match1(pix1.x,pix1.y,pix1.z) = pix2;
-        match2(pix2.x,pix2.y,pix2.z) = pix1;
+        match1[pix1.y][pix1.x][pix1.z] = pix2;
+        match2[pix2.y][pix2.x][pix2.z] = pix1;
     }
     for (int x = 0; x < width; ++x) {
         for (int y = 0; y < height; ++y) {
             for (int z = 0; z < depth; ++z) {
                 if (bmap1[(y*width+x)*depth+z]) {
-                    if (match1(x,y,z) != Voxel(-1,-1,-1)) {
+                    if (match1[y][x][z] != Voxel(-1,-1,-1)) {
+                        if (m1[(y*width+x)*depth+z]>0)
+                            printf("m1 %d %d %d already taken?\n",y,x,z);
                         m1[(y*width+x)*depth+z] = 
-                        match1(x,y,z).y*width*depth + 
-                        match1(x,y,z).x*depth +
-                        match1(x,y,z).z +
-                        1;
+                        match1[y][x][z].y*width*depth + 
+                        match1[y][x][z].x*depth +
+                        match1[y][x][z].z;
                     }
                 }
                 if (bmap2[(y*width+x)*depth+z]) {
-                    if (match2(x,y,z) != Voxel(-1,-1,-1)) {
+                    if (match2[y][x][z] != Voxel(-1,-1,-1)) {
+                        if (m2[(y*width+x)*depth+z]>0)
+                            printf("m2 %d %d %d already taken?\n",y,x,z);
                         m2[(y*width+x)*depth+z] = 
-                        match2(x,y,z).y*width*depth + 
-                        match2(x,y,z).x*depth +
-                        match2(x,y,z).z +
+                        match2[y][x][z].y*width*depth + 
+                        match2[y][x][z].x*depth +
+                        match2[y][x][z].z +
                         1;
                     }
                 }
@@ -702,22 +723,22 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
         for (int y = 0; y < height; ++y) {
             for (int z = 0; z < depth; ++z) {
                 if (bmap1[(y*width+x)*depth+z]) {
-                    if (match1(x,y,z) == Voxel(-1,-1,-1)) {
+                    if (match1[y][x][z] == Voxel(-1,-1,-1)) {
                         cost += outlierCost;
                     } else {
-                        const int dx = x - match1(x,y,z).x;
-                        const int dy = y - match1(x,y,z).y;
-                        const int dz = z - match1(x,y,z).z;
+                        const int dx = x - match1[y][x][z].x;
+                        const int dy = y - match1[y][x][z].y;
+                        const int dz = z - match1[y][x][z].z;
                         cost += 0.5 * sqrt (dx*dx + dy*dy + dz*dz);
                     }
                 }
                 if (bmap2[(y*width+x)*depth+z]) {
-                    if (match2(x,y,z) == Voxel(-1,-1,-1)) {
+                    if (match2[y][x][z] == Voxel(-1,-1,-1)) {
                         cost += outlierCost;
                     } else {
-                        const int dx = x - match2(x,y,z).x;
-                        const int dy = y - match2(x,y,z).y;
-                        const int dz = z - match2(x,y,z).z;
+                        const int dx = x - match2[y][x][z].x;
+                        const int dy = y - match2[y][x][z].y;
+                        const int dz = z - match2[y][x][z].z;
                         cost += 0.5 * sqrt (dx*dx + dy*dy + dz*dz);
                     }
                 }

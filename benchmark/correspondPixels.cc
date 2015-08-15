@@ -6,7 +6,7 @@
 #include "match.hh"
 
 static const double maxDistDefault = 0.05;
-static const double outlierCostDefault = 100;
+static const double outlierCostDefault = 1000;
 
 void correspondPixels(const double* bmap1, const int rows1, const int cols1, 
                       const double* bmap2, const int rows2, const int cols2,
@@ -39,7 +39,7 @@ void correspondVoxels(const double* bmap1, const int rows1, const int cols1, con
                       double* match1, int m1, int n1, int k1, 
                       double* match2, int m2, int n2, int k2,
                       double &cost, double& oc,
-                      double maxDist=0.005,int degree=6)
+                      double maxDist=0.005, int degree=6)
 {
 
     // todo if rows/cols not the same
