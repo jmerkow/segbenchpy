@@ -363,7 +363,7 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
                      double* m2, int m2h, int m2w, int m2z,
                      double maxDist, double outlierCost, int degree)
 {
-    const int multiplier = 10000;
+    const int multiplier = 1000;
     assert (degree > 0);
     assert (multiplier > 0);
 
@@ -393,7 +393,8 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
 
     // Radius of search window.
     const int r = (int) ceil (maxDist);
-    printf("max dist: %f \n", maxDist);
+    printf("max dist: %f r: %d ", maxDist,r);
+
     int c_matchable =0;
     int c_matchable2 =0;
     // Figure out which nodes are matchable, i.e. within maxDist
@@ -535,7 +536,7 @@ double matchEdgeMaps3D(const double* bmap1, const int height, const int width, c
 
     // Weight of outlier connections.
     const int ow = (int) ceil (outlierCost * multiplier);
-
+    printf("ow: %d\n",ow);
     // Scratch array for outlier edges.
     Array1D<int> outliers (dmax);
     // printf("dmax %d\n",dmax);
