@@ -5,6 +5,8 @@ from numpy import zeros, zeros_like
 import sys, time, os
 from util import normal_img, maxeps
 import fnmatch, re
+import matplotlib.pyplot as plt
+from tabulate import tabulate
 npa=np.array
 pjoin = os.path.join
 
@@ -115,7 +117,7 @@ def evaluate_edge_dir(res_dir):
     cntSum = np.sum(allCnts,axis=2)
     R,P,F  = computeRPF(*(cntSum))
     odsR,odsP,odsF,odsT = findBestRPF(T,R,P)
-    AP=np.interp(np.arange(0,1,.01),R[:-1],P[:-1]); AP = np.sum(AP[AP==AP])/100
+    AP=np.interp(np.arange(0,1,.01),P[P>0],R[P>0],left=0,right=0); AP = np.sum(AP)/100
 
     num_out = dict(odsR=odsR,odsP=odsP,odsF=odsF,odsT=odsT,
                   oisR=oisR,oisP=oisP,oisF=oisF,AP=AP)
@@ -124,3 +126,50 @@ def evaluate_edge_dir(res_dir):
                      Rs=Rs,Ps=Ps,Fs=Fs,Ts=Ts,
                      bstRs=bstRs, bstPs=bstPs, bstTs=bstTs, bstFs=bstFs)
     return num_out,graph_out
+
+def plot_results(res_dirs,row_labels,headers = ['AP','odsF','oisF','nimg'],
+                show_per_image=False,fig_size=(5,10),title=None):
+
+        fig,(axRP,axF) = plt.subplots(1,2,sharey='col')
+        fig.set_figwidth(fig_size[1]);fig.set_figheight(fig_size[0])
+        cmap = plt.get_cmap('gnuplot2')
+        layer_colors = [cmap(i) for i in np.linspace(.1, .8, len(res_dirs.keys()))]
+        num_outc=dict()
+        tab = list()
+        for c,layer in zip(layer_colors,sorted(res_dirs.keys())):
+            try:
+                num_outc[layer],graph_out=evaluate_edge_dir(res_dirs[layer])
+                axRP.plot(graph_out['R'][:-1],graph_out['P'][:-1],'-',color=c,label=row_labels[layer])
+                axRP.plot(num_outc[layer]['odsR'],num_outc[layer]['odsP'],'o',color=c)
+                axF.plot(graph_out['T'],graph_out['F'],'-',color=c)
+                axF.plot(num_outc[layer]['odsT'],num_outc[layer]['odsF'],'o',color=c)
+                num_outc[layer]['nimg'] = len(graph_out['bstTs'])
+
+            except:
+                num_outc[layer] = dict()
+                for h in headers:
+                    num_outc[layer][h]= "N/A"
+            row = [row_labels[layer]]+[num_outc[layer][h] for h in headers]
+            tab.append(row)
+        axRP.legend(ncol=len(layer_colors),loc='upper center', bbox_to_anchor=(1.1, -0.15))
+        axRP.set_xlim(0,1);axRP.set_ylim(0,1)
+        axRP.set_ylabel('Recall');axRP.set_xlabel('Precision')
+        axF.set_xlim(0,1);axF.set_ylim(0,1)
+        axF.set_ylabel('F-Score');axF.set_xlabel('Threshold')
+        if title is not None:
+            plt.suptitle(title)
+        plt.show()                                     
+        print(tabulate(tab,headers=headers,tablefmt="fancy_grid",
+                       floatfmt="0.4f",numalign="decimal",stralign='right'))
+        if show_per_image:
+            fig2,(axRPs,axFs) = plt.subplots(1,2)
+            fig2.set_figwidth(10);fig2.set_figheight(5)
+            cmap = plt.get_cmap('jet')
+            colors = [cmap(i) for i in np.linspace(.1, .8, len(graph_out['bstTs']))]
+            for i,c in enumerate(colors):
+                axRPs.plot(graph_out['Rs'][:-1,i],graph_out['Ps'][:-1,i],'-',color=c,label=str(i))
+                axRPs.plot(graph_out['bstRs'][i],graph_out['bstPs'][i],'o',color=c)
+                axFs.plot(graph_out['Ts'][:,i],graph_out['Fs'][:,i],'-',color=c)
+                axFs.plot(graph_out['bstTs'][i],graph_out['bstFs'][i],'o',color=c)
+            axRPs.legend(ncol=5,loc='upper center', bbox_to_anchor=(1, -0.05))
+        print("")
