@@ -3,7 +3,10 @@ import benchmark_swig
 import numpy as np
 from numpy import zeros, zeros_like
 import sys, time, os
-from util import normal_img
+from util import normal_img, maxeps
+import fnmatch, re
+npa=np.array
+pjoin = os.path.join
 
 def correspondPixels(bmap1, bmap2, maxDist=0.005):
     match1 = zeros_like(bmap1)
@@ -31,7 +34,7 @@ def matchEdgeMaps3D(bmap1, bmap2, maxDist=.005, outlierCost=100, degree=6):
     return cost,m1,m2
 ###############################################################
 def eval_edgemap(E,GT,id=None,res_dir=None,K=99):
-    thrs= np.linspace(1/K,1,K)
+    thrs= np.linspace(1.0/K,1,K)
     ret = list()
     if id is None:
         id = 'results'
@@ -40,8 +43,10 @@ def eval_edgemap(E,GT,id=None,res_dir=None,K=99):
     else:
         fname = None
     print("[",id,"]",end='',sep='')
+    num_dots = 30
+    dot_on = np.ceil((1.0+K)/num_dots)
     for t,th in enumerate(thrs):
-            Et = (normalimg(E)>th).astype(float)
+            Et = (normal_img(E)>th).astype(float)
             _,_,matchE,matchG = correspondVoxels((Et>0).astype(float),
                                                    (GT>0).astype(float),.0075, 8)
             matchE,matchG = matchE>0,matchG>0
@@ -52,14 +57,70 @@ def eval_edgemap(E,GT,id=None,res_dir=None,K=99):
                 cntP=np.sum(matchE.astype(int)), #cntP
                 sumP=np.sum(Et.astype(int))      #sumP
                 )
-            print(".",end='')        
+            if t%dot_on==0: print(".",end='')        
             ret.append(d)
     print("!",end='')
     if fname is not None:
-        print(fname)
         keys = ['th','cntR','sumR','cntP','sumP']
         ret2 = [ [r[k] for k in keys] for r in ret]
         header = "\t\t{:10s}{:10s}{:10s}{:10s}{:10s}".format(*keys)
         np.savetxt(fname,ret2,fmt="%10g %10g %10g %10g %10g",
                    header=header)
+        print("!")
     return ret
+
+def computeRPF(cntR,sumR,cntP,sumP):
+    R = np.divide(cntR.astype(float),sumR+1e-5)
+    P = np.divide(cntP.astype(float),sumP+1e-5)
+    d = npa(maxeps(P+R))
+    F =(2*R*P)/d
+    return R,P,F
+
+def findBestRPF(T,R,P):
+    A = np.linspace(0,1,100)
+    B = np.add(1,-A)
+    l = len(R)
+    def interpt(G,A,B):
+        return np.array([G[j]*A + G[j-1]*B for j in range(1,len(G))])
+    Tj,Rj,Pj =  interpt(T,A,B), interpt(R,A,B), interpt(P,A,B)
+    Fj = (2*Rj*Pj)/(Rj+Pj+1e-5)
+    k = np.unravel_index(np.argmax(Fj),Fj.shape)
+    bstR,bstP,bstF,bstT = Rj[k],Pj[k],Fj[k],Tj[k]
+    return bstR,bstP,bstF,bstT
+def collect_result_files(res_dir):
+    allresfiles = sorted(os.listdir(res_dir))
+    resfiles = dict()
+    reg = '([\d]*)\.txt'
+    reobj = re.compile(reg)
+    for f in allresfiles:
+        m = reobj.match(f)
+        if m:
+            resfiles[int(m.groups()[0])] = f
+    resfiles=list(sorted(resfiles.itervalues()))
+    return resfiles,len(resfiles)
+def evaluate_edge_dir(res_dir):
+    resfiles,num_res_files = collect_result_files(res_dir)
+    res = npa([np.loadtxt(pjoin(res_dir,r)) for r in resfiles]).transpose(2,1,0)
+    Ts = npa([res[0,:,r] for r in range(num_res_files)]).T
+    allCnts = npa([res[1:,:,r] for r in range(num_res_files)]).transpose(1,2,0)
+
+    Rs,Ps,Fs = npa([computeRPF(*allCnts[...,r]) for r in range(num_res_files)]).transpose(1,2,0)
+    Ks = np.argmax(Fs,axis=0)
+    bstRs,bstPs,bstFs,bstTs = npa([findBestRPF(Ts[:,i],Rs[:,i],Ps[:,i]) 
+                                       for i in range(num_res_files)]).T
+
+    oisCnts = np.sum([allCnts[:,Ks[i],i] for i in range(num_res_files)],axis=0)
+    oisR,oisP,oisF  = computeRPF(*(oisCnts))
+    T = Ts[:,0]
+    cntSum = np.sum(allCnts,axis=2)
+    R,P,F  = computeRPF(*(cntSum))
+    odsR,odsP,odsF,odsT = findBestRPF(T,R,P)
+    AP=np.interp(np.arange(0,1,.01),R[:-1],P[:-1]); AP = np.sum(AP[AP==AP])/100
+
+    num_out = dict(odsR=odsR,odsP=odsP,odsF=odsF,odsT=odsT,
+                  oisR=oisR,oisP=oisP,oisF=oisF,AP=AP)
+    
+    graph_out = dict(R=R,P=P,F=F,T=T,
+                     Rs=Rs,Ps=Ps,Fs=Fs,Ts=Ts,
+                     bstRs=bstRs, bstPs=bstPs, bstTs=bstTs, bstFs=bstFs)
+    return num_out,graph_out
