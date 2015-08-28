@@ -3,7 +3,12 @@ from scipy.ndimage.filters import convolve1d as convn
 import numpy as np
 
 def maxeps(arr,eps=np.finfo(float).eps):
-    return [max(eps,a) for a in arr] if hasattr(arr, '__iter__') else max(eps,arr)
+    if hasattr(arr, '__iter__'):
+        arr=np.array(arr)
+        sh=arr.shape
+        return np.array([max(eps,a) for a in arr.ravel()]).reshape(sh)                 
+    else:
+        return max(eps,arr)
 
 def normal_img(E):
     if (E.max()-E.min())>0:

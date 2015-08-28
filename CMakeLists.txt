@@ -1,15 +1,18 @@
 cmake_minimum_required(VERSION 2.8)
 project(seg-bench)
 set(PACKAGE_VERSION "0.1")
-
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 include_directories(csa util Benchmark)
 if(APPLE)
-include_directories(/usr/include/malloc/)
-include_directories(/opt/local/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/numpy/core/include/)
+    include_directories(/usr/include/malloc/)
+    include_directories(/opt/local/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/numpy/core/include/)
 endif()
+find_package(GFlags)
+find_package(Glog)
+
+
 add_subdirectory(edges)
 add_subdirectory(csa)
 add_subdirectory(util)
 add_subdirectory(benchmark)
-
 add_subdirectory(python)
