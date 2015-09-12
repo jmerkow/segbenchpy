@@ -46,6 +46,12 @@ def eval_edgemap(E,GT,id=None,res_dir=None,K=99,thin=False):
     else:
         fname = None
     print("[",id,"]",end='',sep='')
+    if os.path.exists(fname):
+       ret_t= npa(np.loadtxt(fname))
+       print(fname,"exists! shape:",ret_t.shape)
+       return ret_t
+
+
     print(K,E.shape,end='')
     num_dots = 30
     dot_on = np.ceil((1.0+K)/num_dots)
