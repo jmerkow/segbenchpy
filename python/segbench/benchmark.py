@@ -51,7 +51,7 @@ def eval_edgemap(E,GT,id=None,res_dir=None,K=99,thin=False):
     dot_on = np.ceil((1.0+K)/num_dots)
     for t,th in enumerate(thrs):
             E1 = (normal_img(E)>maxeps(th)).astype(float)
-            _,_,matchE,matchG = correspondVoxels((Et>0).astype(float),
+            _,_,matchE,matchG = correspondVoxels((E1>0).astype(float),
                                                    (GT>0).astype(float),.0075, 8)
             matchE,matchG = matchE>0,matchG>0
             d = dict(
@@ -132,9 +132,24 @@ def evaluate_edge_dir(res_dir):
                      Rs=Rs,Ps=Ps,Fs=Fs,Ts=Ts,
                      bstRs=bstRs, bstPs=bstPs, bstTs=bstTs, bstFs=bstFs)
     return num_out,graph_out
-
+def plot_f_lines(ax=None):
+    if ax is None:
+        fig,ax = plt.subplots(1,1)
+    for f in npa(np.arange(.1,1,.1)):
+        r = np.squeeze(npa([np.arange(f,1.01,.01)]))
+        p = np.squeeze(npa((f*r)/(2*r-f)))
+        ax.plot(p,r,color=[0,1,0]);ax.plot(r,p,color=[0,1,0]);
+        ax.set_xlim(0,1);ax.set_ylim(0,1)
+        ax.set_xlabel('Recall');ax.set_ylabel('Precision')
+        tcks=np.arange(0,1.1,.1)
+        tcks_lab = map('{:g}'.format,tcks)
+        ax.set_xticks(tcks);ax.set_yticks(tcks)
+        ax.set_xticklabels(tcks_lab);ax.set_yticklabels(tcks_lab)
+        ax.grid(1);ax.set_aspect('equal')
+    return ax
 def plot_results(res_dirs,row_labels,headers = ['AP','odsF','oisF','nimg'],
-                show_per_image=False,fig_size=(10,10),title=None,ncol=None,show_f=False):
+                show_per_image=False,fig_size=(10,10),
+                title=None,ncol=None,show_f=False,print_table=True,return_table=False,return_dict=False):
 
         if show_f:
             legof=(1.1, -0.15)
@@ -149,6 +164,7 @@ def plot_results(res_dirs,row_labels,headers = ['AP','odsF','oisF','nimg'],
         if ncol is None:
             ncol=len(layer_colors)
         tab = list()
+        tab_d = list()
         for f in npa(np.arange(.1,1,.1)):
             r = np.squeeze(npa([np.arange(f,1.01,.01)]))
             p = np.squeeze(npa((f*r)/(2*r-f)))
@@ -168,7 +184,17 @@ def plot_results(res_dirs,row_labels,headers = ['AP','odsF','oisF','nimg'],
                 num_outc[layer] = dict()
                 for h in headers:
                     num_outc[layer][h]= float('nan')
+            row_d = dict(row_label=row_labels[layer])
+            for h in headers:
+                row_d[h]=num_outc[layer][h]
+            try:
+                for k,v in graph_out.iteritems():
+                    if 's' not in k:
+                        row_d[k]=graph_out[k]
+            except:
+                print(".",end='')
             row = [row_labels[layer]]+[num_outc[layer][h] for h in headers]
+            tab_d.append(row_d)
             tab.append(row)
         axRP.legend(ncol=ncol,loc='upper center', 
             bbox_to_anchor=legof,numpoints=1)
@@ -187,8 +213,9 @@ def plot_results(res_dirs,row_labels,headers = ['AP','odsF','oisF','nimg'],
             axF.set_aspect('equal')
         if title is not None:
             plt.suptitle(title)
-        plt.show()                                     
-        print(tabulate(tab,headers=headers,tablefmt="fancy_grid",floatfmt="0.4f",numalign="decimal",stralign='right'))
+        plt.show()
+        if print_table:                                     
+            print(tabulate(sorted(tab),headers=headers,tablefmt="fancy_grid",floatfmt="0.4f",numalign="decimal",stralign='right'))
         if show_per_image:
             fig2,(axRPs,axFs) = plt.subplots(1,2)
             fig2.set_figwidth(10);fig2.set_figheight(5)
@@ -201,5 +228,10 @@ def plot_results(res_dirs,row_labels,headers = ['AP','odsF','oisF','nimg'],
                 axFs.plot(graph_out['bstTs'][i],graph_out['bstFs'][i],'o',color=c)
             axRPs.legend(ncol=5,loc='upper center', bbox_to_anchor=(1, -0.05),numpoints=1)
         print("")
-
-        return tab,headers
+        rout=[]
+        if return_table:
+            rout.append(tab);rout.append(headers)
+        if return_dict:
+            rout.append(tab_d)
+        if len(rout):
+            return rout

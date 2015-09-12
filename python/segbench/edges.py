@@ -32,7 +32,7 @@ def edge_direction_2D(E,r=5):
     Oxy,Oyy = np.gradient(Oy);
     return np.arctan(Oyy*np.sign(-Oxy)/maxeps(Oxx,1e-5))
 
-def edge_direction_3D(E,r=1):
+def edge_direction_3D(E,r=4):
     D = conv_tri_3D(E,r)
     Ox,Oy,Oz = np.gradient(D)
     M = np.sqrt(Ox*Ox+Oy*Oy+Oz*Oz)
@@ -43,8 +43,9 @@ def edge_direction_3D(E,r=1):
     Py= np.sin(theta)*np.sin(phi)
     Pz= np.cos(phi)
     return Px,Py,Pz,D
+
 def edge_auto_nms_3D(E,sigma1=1,sigma2=5,r=1,m=1.001,border_s=0,
-    debug_save=False, size_check=True):
+    debug_save=False, size_check=False):
     E = normal_img(E)
     if sigma1>0:
         Eb = conv_tri_3D(E,sigma1)
